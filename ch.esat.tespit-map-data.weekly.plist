@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>ch.esat.tespit-map-data.weekly</string>
+  <key>ProgramArguments</key>
+  <array><string>/opt/homebrew/bin/python3</string><string>weekly.py</string></array>
+  <key>WorkingDirectory</key><string>/Users/esatarslan/Desktop/Programmieren/Tespit Kartendaten</string>
+  <key>EnvironmentVariables</key>
+  <dict><key>PATH</key><string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string></dict>
+  <!-- Jede Nacht 03:17 (schläft der Mac: beim nächsten Aufwachen); weekly.py arbeitet nur, wenn die letzte
+       Veröffentlichung mindestens 6 Tage her ist. -->
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>3</integer><key>Minute</key><integer>17</integer></dict>
+  <key>LowPriorityIO</key><true/>
+  <key>Nice</key><integer>10</integer>
+  <key>StandardOutPath</key><string>/Users/esatarslan/Desktop/Programmieren/Tespit Kartendaten/logs/launchd.log</string>
+  <key>StandardErrorPath</key><string>/Users/esatarslan/Desktop/Programmieren/Tespit Kartendaten/logs/launchd.log</string>
+</dict>
+</plist>

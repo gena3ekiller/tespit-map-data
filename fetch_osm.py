@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""Lädt einmalig die OSM-Blitzer der Länder, für die Tespit Daten zeigt (Plan vom 22.10.2026).
+"""Lädt die OSM-Blitzer der Länder, für die Tespit Daten zeigt (Plan vom 22.10.2026).
 
 Nur erlaubte Länder, Deutschland (mit Hinweis) und Frankreich (nur für Gefahrenzonen).
 Gesperrte Länder werden nie abgefragt. Ergebnis: raw/osm_<ISO>.json
+Aufruf: fetch_osm.py [--neu] [ISO …]   (--neu lädt auch vorhandene Länder neu, wöchentlicher Lauf;
+eine Datei wird erst nach erfolgreichem Laden ersetzt, Exit-Code 1, wenn ein Land scheitert)
 """
 import json, sys, time, urllib.parse, urllib.request
 from pathlib import Path
 
 B = Path(__file__).resolve().parent
 RAW = B / 'raw'
-URL = 'https://overpass-api.de/api/interpreter'
+# Hauptserver und ein zweiter öffentlicher Server; die Versuche wechseln sich ab (der Hauptserver ist oft voll).
+URLS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter']
 COUNTRIES = ['AT', 'IT', 'ES', 'NL', 'BE', 'LU', 'PL', 'CZ', 'HU', 'DK', 'GB', 'XK', 'DE', 'FR']
 
 QUERY = """[out:json][timeout:900];
@@ -24,18 +27,21 @@ out skel qt;
 """
 
 
-def fetch(iso):
+def fetch(iso, again=False):
     target = RAW / f'osm_{iso}.json'
-    if target.exists() and target.stat().st_size > 100:
+    if not again and target.exists() and target.stat().st_size > 100:
         return iso, 'vorhanden', target.stat().st_size
     data = urllib.parse.urlencode({'data': QUERY.format(iso=iso)}).encode()
-    request = urllib.request.Request(URL, data=data, headers={'User-Agent': 'Tespit-Kartendaten/1 (einmaliger Aufbau)'})
+    request = lambda attempt: urllib.request.Request(URLS[attempt % len(URLS)], data=data, headers={'User-Agent': 'Tespit-Kartendaten/1 (wöchentlich, github.com/gena3ekiller/tespit-map-data)'})
     for attempt in range(4):
         try:
-            with urllib.request.urlopen(request, timeout=1000) as reply:
+            with urllib.request.urlopen(request(attempt), timeout=1000) as reply:
                 body = reply.read()
-            json.loads(body)
-            target.write_bytes(body)
+            if not json.loads(body).get('elements'):
+                raise ValueError('leer')
+            temporary = target.with_suffix('.tmp')
+            temporary.write_bytes(body)
+            temporary.replace(target)
             return iso, 'ok', len(body)
         except Exception as error:  # noqa: BLE001
             print(f'{iso}: Versuch {attempt + 1} fehlgeschlagen: {error}', flush=True)
@@ -45,6 +51,12 @@ def fetch(iso):
 
 if __name__ == '__main__':
     RAW.mkdir(exist_ok=True)
-    for iso in (sys.argv[1:] or COUNTRIES):
-        print(*fetch(iso), flush=True)
+    again = '--neu' in sys.argv
+    failed = []
+    for iso in ([a for a in sys.argv[1:] if not a.startswith('--')] or COUNTRIES):
+        result = fetch(iso, again)
+        print(*result, flush=True)
+        if result[1] == 'fehlgeschlagen':
+            failed.append(iso)
         time.sleep(5)
+    sys.exit(1 if failed else 0)

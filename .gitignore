@@ -10,3 +10,5 @@ out/*
 !out/speedtrap_borders_v1.json
 dist/
 .DS_Store
+logs/
+.weekly.lock

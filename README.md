@@ -14,5 +14,7 @@ Fixed speed camera data for the Tespit app, built from OpenStreetMap.
 - **Scripts:** `build_borders.py` (borders and country table, byte-identical with the apps), `fetch_osm.py`,
   `fetch_roads.py`, `fetch_fr_roads.py`, `build_zones.py`, `build_approaches.py`, `build_pack.py`,
   then `publish.py` (deterministic gzip, release, manifest). Raw downloads and the danger-zone salt stay local.
+- **Updates:** `weekly.py` rebuilds the data about once a week (only new cameras need new road queries), checks it
+  (no point in or near a blocked country, danger zones only in France, no sudden drop) and publishes a new release.
 
 Code: MIT. Data: ODbL 1.0.
