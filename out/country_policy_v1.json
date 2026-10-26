@@ -1,0 +1,63 @@
+{
+ "schema": 1,
+ "note": "Strenge: blocked > unknown > zonesOnly > allowedWithNotice > allowed. Nicht gelistete Länder sind unknown (aus).",
+ "default": "unknown",
+ "states": {
+  "CH": "blocked",
+  "LI": "blocked",
+  "TR": "blocked",
+  "MK": "blocked",
+  "CY": "blocked",
+  "BA": "blocked",
+  "SK": "blocked",
+  "IE": "blocked",
+  "CN": "blocked",
+  "FR": "zonesOnly",
+  "DE": "allowedWithNotice",
+  "AT": "allowed",
+  "IT": "allowed",
+  "ES": "allowed",
+  "NL": "allowed",
+  "BE": "allowed",
+  "LU": "allowed",
+  "PL": "allowed",
+  "CZ": "allowed",
+  "HU": "allowed",
+  "DK": "allowed",
+  "GB": "allowed",
+  "US": "allowed",
+  "HK": "allowed",
+  "MO": "allowed",
+  "XK": "allowed"
+ },
+ "bands": {
+  "blocked": {
+   "enterKm": 2.0,
+   "leaveKm": 2.5
+  },
+  "blocked.CN": {
+   "enterKm": 10.0,
+   "leaveKm": 10.5
+  },
+  "zonesOnly": {
+   "enterKm": 1.0,
+   "leaveKm": 1.5
+  },
+  "allowedWithNotice": {
+   "enterKm": 0.5,
+   "leaveKm": 1.0
+  }
+ },
+ "positions": {
+  "maxAccuracyM": 65,
+  "maxAgeS": 5,
+  "teslaAccuracyM": 65,
+  "teslaExtraAgeS": 2
+ },
+ "relax": {
+  "fixes": 5,
+  "seconds": 4
+ },
+ "pipelineBlockedBandKm": 3.0,
+ "appAdmissionBlockedBandKm": 2.0
+}

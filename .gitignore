@@ -1,0 +1,12 @@
+# Rohdaten (OSM-Auszüge, Straßen, Natural Earth) werden neu geladen, nie eingecheckt.
+raw/
+# Das Salz der Gefahrenzonen bleibt lokal.
+secret/
+*.log
+__pycache__/
+# Zwischenstände; eingecheckt sind nur die Grenzdatei und die Ländertabelle (byte-gleich mit den Apps).
+out/*
+!out/country_policy_v1.json
+!out/speedtrap_borders_v1.json
+dist/
+.DS_Store

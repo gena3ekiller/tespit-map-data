@@ -1,0 +1,7 @@
+{
+ "schema": 1,
+ "enabled": true,
+ "disabledCountries": [],
+ "minAppVersion": "1.1.16",
+ "pack": null
+}
