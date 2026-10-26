@@ -3,5 +3,13 @@
  "enabled": true,
  "disabledCountries": [],
  "minAppVersion": "1.1.16",
- "pack": null
+ "pack": {
+  "tag": "data-2026-10-26",
+  "file": "speedtraps.json.gz",
+  "size": 2055253,
+  "sha256": "05aa193fa0d5c2b61c73098c94a61730ec473f1be27fbb68392fb15f07fd5516",
+  "unpackedSize": 6940821,
+  "unpackedSha256": "d14590e336df26697f18c1aa8d7ca4cca0164aace47c8fda559e1c13dbe2b63d",
+  "dataDate": "2026-10-26"
+ }
 }
