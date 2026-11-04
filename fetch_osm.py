@@ -6,7 +6,7 @@ Gesperrte Länder werden nie abgefragt. Ergebnis: raw/osm_<ISO>.json
 Aufruf: fetch_osm.py [--neu] [ISO …]   (--neu lädt auch vorhandene Länder neu, wöchentlicher Lauf;
 eine Datei wird erst nach erfolgreichem Laden ersetzt, Exit-Code 1, wenn ein Land scheitert)
 """
-import json, sys, time, urllib.parse, urllib.request
+import datetime, json, sys, time, urllib.parse, urllib.request
 from pathlib import Path
 
 B = Path(__file__).resolve().parent
@@ -14,6 +14,9 @@ RAW = B / 'raw'
 # Hauptserver und ein zweiter öffentlicher Server; die Versuche wechseln sich ab (der Hauptserver ist oft voll).
 URLS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter']
 COUNTRIES = ['AT', 'IT', 'ES', 'NL', 'BE', 'LU', 'PL', 'CZ', 'HU', 'DK', 'GB', 'XK', 'DE', 'FR']
+# 04.11.2026: ein Spiegel von private.coffee lieferte für Frankreich den Stand vom 15.07.2026 (222 statt 31'000
+# Elemente) und überschrieb die gute Datei. Antworten mit älterem OSM-Stand werden verworfen.
+MAX_AGE_DAYS = 3
 
 QUERY = """[out:json][timeout:900];
 area["ISO3166-1"="{iso}"][admin_level=2]->.a;
@@ -27,6 +30,13 @@ out skel qt;
 """
 
 
+def was_empty(target):
+    try:
+        return not json.loads(target.read_text(encoding='utf-8')).get('elements')
+    except (OSError, ValueError):
+        return False
+
+
 def fetch(iso, again=False):
     target = RAW / f'osm_{iso}.json'
     if not again and target.exists() and target.stat().st_size > 100:
@@ -37,7 +47,15 @@ def fetch(iso, again=False):
         try:
             with urllib.request.urlopen(request(attempt), timeout=1000) as reply:
                 body = reply.read()
-            if not json.loads(body).get('elements'):
+            answer = json.loads(body)
+            base = answer.get('osm3s', {}).get('timestamp_osm_base', '')
+            age = datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(base.replace('Z', '+00:00'))
+            if age.days >= MAX_AGE_DAYS:
+                raise ValueError(f'veralteter Stand {base}')
+            if answer.get('remark'):
+                raise ValueError(f'unvollständig: {answer["remark"][:120]}')
+            # Leer gilt nur, wo schon die letzte Datei leer war (Kosovo hat in OSM keine Blitzer, Stand 04.11.2026).
+            if not answer.get('elements') and not was_empty(target):
                 raise ValueError('leer')
             temporary = target.with_suffix('.tmp')
             temporary.write_bytes(body)
