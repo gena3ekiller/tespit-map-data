@@ -7,7 +7,7 @@ the prize and both platform codes, each sealed with AES-256-GCM (key ADVENT_KEY,
 "door-NN-ios" / "door-NN-android"). The codes live only in the secret ADVENT_CODES until then:
 {"1": {"ios": "...", "android": "..."}, ..., "24": {...}}.
 
-  advent_publish.py            publish today's door if it is due (Actions)
+  advent_publish.py            remove earlier days' doors; publish today's door if it is due (Actions)
   advent_publish.py --times    print the 24 opening times (needs ADVENT_SEED; never commit the output)
   advent_publish.py --check    check the three secrets; prints only short fingerprints, writes nothing
   advent_publish.py --test     write advent/test/door-01.json with dummy codes, opened now (app QA)
@@ -86,6 +86,25 @@ def check(key: bytes, seed: bytes, codes: dict) -> int:
     return 1 if problems else 0
 
 
+def stale_doors(root: str, now: datetime.datetime) -> list:
+    """The door files of earlier days (Berlin): removed at midnight, so the path the app asks for never serves an old
+    door again, whatever time a phone or a proxy claims (Esat 12.11.2026: „nicht manipulierbar“). Git history keeps
+    them, but the app never reads it."""
+    folder = f"{root}/advent/{YEAR}"
+    today = now.astimezone(BERLIN).date()
+    stale = []
+    for name in sorted(os.listdir(folder)) if os.path.isdir(folder) else []:
+        if not (name.startswith("door-") and name.endswith(".json")):
+            continue
+        try:
+            day = int(name[5:7])
+        except ValueError:
+            continue
+        if datetime.date(YEAR, 12, day) < today:
+            stale.append(f"{folder}/{name}")
+    return stale
+
+
 def main() -> int:
     key = bytes.fromhex(os.environ["ADVENT_KEY"].strip())
     if "--test" in sys.argv:
@@ -101,6 +120,9 @@ def main() -> int:
             print(day, opening_time(seed, day).strftime("%H:%M"))
         return 0
     now = datetime.datetime.now(BERLIN)
+    for path in stale_doors(ROOT, now):
+        os.remove(path)
+        print(f"removed {os.path.basename(path)}")
     if not (now.year == YEAR and now.month == 12 and 1 <= now.day <= 24):
         print("outside the calendar")
         return 0
