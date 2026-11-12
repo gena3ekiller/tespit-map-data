@@ -1,0 +1,15 @@
+{
+ "schema": 1,
+ "year": 2026,
+ "day": 1,
+ "prize": "month1",
+ "openedAt": "2026-11-12T02:35:45+01:00",
+ "ios": {
+  "nonce": "cyi0I1YH7/8qipZw",
+  "box": "AI6tcXZPpWmjKYh9XodDgecyer3NGQC5QPDeoxLlUg=="
+ },
+ "android": {
+  "nonce": "MgOD79QguvgNyyK8",
+  "box": "jlY62SNYOLSAQQw6/s+9Q7RSk6sQ2AA/kIyoLbVd7psbF/Q="
+ }
+}
