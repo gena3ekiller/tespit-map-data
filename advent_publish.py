@@ -9,6 +9,7 @@ the prize and both platform codes, each sealed with AES-256-GCM (key ADVENT_KEY,
 
   advent_publish.py            publish today's door if it is due (Actions)
   advent_publish.py --times    print the 24 opening times (needs ADVENT_SEED; never commit the output)
+  advent_publish.py --check    check the three secrets; prints only short fingerprints, writes nothing
   advent_publish.py --test     write advent/test/door-01.json with dummy codes, opened now (app QA)
 """
 import base64, datetime, hashlib, hmac, json, os, sys
@@ -53,6 +54,38 @@ def write(path: str, data: dict) -> None:
         f.write("\n")
 
 
+def fingerprint(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()[:12]
+
+
+def check(key: bytes, seed: bytes, codes: dict) -> int:
+    """--check: are the three secrets complete and usable? Prints only counts and short fingerprints, never a
+    code or an opening time; nothing is written."""
+    problems = []
+    if len(key) != 32:
+        problems.append("ADVENT_KEY is not 32 bytes")
+    if len(seed) < 16:
+        problems.append("ADVENT_SEED is shorter than 16 bytes")
+    days = [d for d in range(1, 25) if codes.get(str(d), {}).get("ios") and codes.get(str(d), {}).get("android")]
+    if len(days) != 24:
+        problems.append(f"ADVENT_CODES has both codes for {len(days)} of 24 doors")
+    every = [codes[str(d)][p] for d in days for p in ("ios", "android")]
+    if len(set(every)) != len(every):
+        problems.append("ADVENT_CODES repeats a code")
+    for d in days:
+        for p in ("ios", "android"):
+            box = seal(key, codes[str(d)][p], d, p)
+            plain = AESGCM(key).decrypt(base64.b64decode(box["nonce"]), base64.b64decode(box["box"]), f"door-{d:02d}-{p}".encode())
+            if plain.decode() != codes[str(d)][p]:
+                problems.append(f"door {d} {p} does not round-trip")
+    canonical = json.dumps({str(d): codes[str(d)] for d in days}, sort_keys=True, separators=(",", ":")).encode()
+    print(f"key {fingerprint(key)} seed {fingerprint(seed)} codes {fingerprint(canonical)} doors {len(days)}")
+    for p in problems:
+        print(f"::error::{p}")
+    print("check ok" if not problems else "check FAILED")
+    return 1 if problems else 0
+
+
 def main() -> int:
     key = bytes.fromhex(os.environ["ADVENT_KEY"].strip())
     if "--test" in sys.argv:
@@ -61,6 +94,8 @@ def main() -> int:
         print("test door written")
         return 0
     seed = bytes.fromhex(os.environ["ADVENT_SEED"].strip())
+    if "--check" in sys.argv:
+        return check(key, seed, json.loads(os.environ.get("ADVENT_CODES") or "{}"))
     if "--times" in sys.argv:
         for day in range(1, 25):
             print(day, opening_time(seed, day).strftime("%H:%M"))

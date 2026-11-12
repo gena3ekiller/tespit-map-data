@@ -5,7 +5,12 @@ name: Adventskalender
 on:
   schedule:
     - cron: "*/10 6-19 1-24 12 *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      check:
+        description: "Only check the secrets (prints fingerprints, publishes nothing)"
+        type: boolean
+        default: false
 permissions:
   contents: write
 concurrency:
@@ -25,7 +30,7 @@ jobs:
           ADVENT_KEY: ${{ secrets.ADVENT_KEY }}
           ADVENT_SEED: ${{ secrets.ADVENT_SEED }}
           ADVENT_CODES: ${{ secrets.ADVENT_CODES }}
-        run: python3 advent_publish.py
+        run: python3 advent_publish.py ${{ inputs.check && '--check' || '' }}
       - name: Commit
         run: |
           if [ -n "$(git status --porcelain advent)" ]; then
