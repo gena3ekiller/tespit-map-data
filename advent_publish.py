@@ -21,7 +21,8 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 def prize(day: int) -> str:
-    return "lifetime" if day == 24 else "month3" if day >= 20 else "month1"
+    # Esat 12.11.2026: 1–9 two weeks, 10–19 one month, 20–23 three months, 24 Lifetime.
+    return "lifetime" if day == 24 else "month3" if day >= 20 else "month1" if day >= 10 else "weeks2"
 
 
 def opening_time(seed: bytes, day: int) -> datetime.datetime:
