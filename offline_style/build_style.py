@@ -51,8 +51,10 @@ DARK = {
 
 SOURCE = 'osm'
 NAME = ['coalesce', ['get', 'name:{LANG}'], ['get', 'name']]
-# Folder names without spaces, so the glyph URLs need no escaping (file URLs on iOS, asset URLs on Android).
-REGULAR, MEDIUM, ITALIC = ['NotoSans-Regular'], ['NotoSans-Medium'], ['NotoSans-Italic']
+# One font for every label: Noto Sans Regular covers nearly every script of the world in 6 MB of glyphs (Chinese,
+# Japanese and Korean are drawn by MapLibre with the phone's own fonts). Medium and italic would triple that.
+# Folder name without spaces, so the glyph URLs need no escaping (file URLs on iOS, asset URLs on Android).
+REGULAR = MEDIUM = ITALIC = ['NotoSans-Regular']
 
 
 def width(*stops):
