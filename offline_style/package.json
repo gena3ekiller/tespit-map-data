@@ -1,0 +1,9 @@
+{
+  "name": "tespit-offline-style",
+  "private": true,
+  "type": "module",
+  "description": "Builds the offline map style for the Tespit apps from the Protomaps basemap layers (BSD-3 code, CC0 design).",
+  "dependencies": {
+    "@protomaps/basemaps": "5.7.2"
+  }
+}

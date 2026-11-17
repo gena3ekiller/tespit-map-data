@@ -10,3 +10,8 @@ Country borders in `out/speedtrap_borders_v1.json` are derived from
 [Natural Earth](https://www.naturalearthdata.com/) (public domain).
 
 The scripts in this repository are under the MIT License (`LICENSE`).
+
+The offline map packages in the releases `maps-*` (`*.pmtiles`) and the list `offline-maps.json` are derived from
+OpenStreetMap through the Protomaps basemap build and are likewise available under the ODbL 1.0,
+© OpenStreetMap contributors. The offline map style in `offline_style/` follows the colours of openstreetmap-carto
+(CC0); its glyphs are Noto Sans under the SIL Open Font License 1.1 (`offline_style/fonts/OFL.txt`).

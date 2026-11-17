@@ -17,4 +17,16 @@ Fixed speed camera data for the Tespit app, built from OpenStreetMap.
 - **Updates:** `weekly.py` rebuilds the data about once a week (only new cameras need new road queries), checks it
   (no point in or near a blocked country, danger zones only in France, no sudden drop) and publishes a new release.
 
+## Offline maps (1.1.22)
+
+- **Packages:** every country of the world as a PMTiles file with all details (zoom 0–15), cut from the newest
+  [Protomaps](https://protomaps.com) planet build (OpenStreetMap data, Protomaps basemap schema v4). A package stays
+  below 1.9 GB: larger countries are split into their regions (Natural Earth admin 1), a still larger region into
+  halves. Releases `maps-<date>-<continent>` (Europe, Asia, Africa, North America, South America, Oceania, Antarctica).
+- **`offline-maps.json`:** the list the apps read (id, continent, country, name, file, size, SHA-256, bounding box,
+  release tag per region). Like `manifest.json`, it carries no URLs.
+- **Built by** `.github/workflows/offline-maps.yml` (started by hand, about 140 GB) with `build_offline_maps.py`.
+- **Style:** `offline_style/` (colours after the OpenStreetMap standard map, CC0; Noto Sans glyphs, OFL).
+- **License:** ODbL 1.0, © OpenStreetMap contributors. The apps show the attribution on the map.
+
 Code: MIT. Data: ODbL 1.0.

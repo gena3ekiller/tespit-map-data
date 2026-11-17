@@ -1,0 +1,100 @@
+name: Offline-Karten
+# Builds the worldwide offline map packages of the Tespit apps (1.1.22) from the newest Protomaps planet build
+# (OpenStreetMap data, ODbL) and publishes them as releases `maps-<date>-<continent>`; then `offline-maps.json` on main
+# lists them for the apps. About 140 GB: too much for a home connection, so it runs here. Started by hand; a rerun of
+# a failed continent keeps the packages already in its release.
+on:
+  workflow_dispatch:
+    inputs:
+      continents:
+        description: "Continents (JSON list)"
+        default: '["europe","asia","africa","north-america","south-america","oceania","antarctica"]'
+      planet:
+        description: "Planet build (e.g. 20261117.pmtiles); empty = newest"
+        default: ""
+permissions:
+  contents: write
+concurrency:
+  group: offline-maps
+  cancel-in-progress: false
+env:
+  PMTILES_VERSION: "1.31.2"
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      key: ${{ steps.pick.outputs.key }}
+      date: ${{ steps.pick.outputs.date }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: pick
+        run: |
+          if [ -n "${{ inputs.planet }}" ]; then
+            key="${{ inputs.planet }}"
+            echo "key=$key" >> "$GITHUB_OUTPUT"
+            echo "date=${key:0:4}-${key:4:2}-${key:6:2}" >> "$GITHUB_OUTPUT"
+          else
+            python3 build_offline_maps.py select >> "$GITHUB_OUTPUT"
+          fi
+          cat "$GITHUB_OUTPUT"
+
+  build:
+    needs: select
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        continent: ${{ fromJSON(inputs.continents) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          df -h /
+      - name: pmtiles
+        run: |
+          curl -fsSL -o /tmp/pmtiles.tar.gz \
+            "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz"
+          curl -fsSL -o /tmp/checksums.txt \
+            "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/checksums.txt"
+          (cd /tmp && grep "go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz" checksums.txt | sha256sum -c -)
+          sudo tar -xzf /tmp/pmtiles.tar.gz -C /usr/local/bin pmtiles
+          pmtiles version
+      - name: Natural Earth borders
+        run: |
+          mkdir -p raw
+          base="https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson"
+          curl -fsSL -o raw/ne_10m_admin_0_countries.geojson "$base/ne_10m_admin_0_countries.geojson"
+          curl -fsSL -o raw/ne_10m_admin_1_states_provinces.geojson "$base/ne_10m_admin_1_states_provinces.geojson"
+      - name: Build and upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 build_offline_maps.py build "${{ matrix.continent }}" \
+            --planet "${{ needs.select.outputs.key }}" \
+            --tag "maps-${{ needs.select.outputs.date }}-${{ matrix.continent }}" --upload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: regions-${{ matrix.continent }}
+          path: dist/offline/regions-${{ matrix.continent }}.json
+
+  manifest:
+    needs: [select, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist/offline
+          merge-multiple: true
+      - name: Manifest
+        run: python3 build_offline_maps.py manifest --planet "${{ needs.select.outputs.key }}"
+      - name: Commit
+        run: |
+          git config user.name "tespit-offline-maps"
+          git config user.email "tespit-offline-maps@users.noreply.github.com"
+          git add offline-maps.json
+          git commit -m "Offline-Karten ${{ needs.select.outputs.date }}"
+          git push
