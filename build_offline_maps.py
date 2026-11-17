@@ -27,6 +27,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 import unicodedata
 import urllib.request
 from pathlib import Path
@@ -146,11 +147,18 @@ class Planner:
         if area_id in self.sizes:
             return self.sizes[area_id]
         path = self.area_file(area_id, polys)
-        result = subprocess.run(['pmtiles', 'extract', self.planet, str(OUT / 'dry.pmtiles'), f'--region={path}',
-                                 f'--maxzoom={MAXZOOM}', '--dry-run'], capture_output=True, text=True)
-        match = re.search(r'archive size of (\d+(?:\.\d+)?) (B|kB|KB|MB|GB)', result.stdout + result.stderr)
-        if result.returncode != 0 or not match:
-            sys.exit(f'dry run {area_id} failed: {result.stderr[-500:]}')
+        # Three tries: a dry run reads the planet's directories over the network (17.11.2026: one failed silently).
+        for attempt in range(3):
+            result = subprocess.run(['pmtiles', 'extract', self.planet, str(OUT / 'dry.pmtiles'), f'--region={path}',
+                                     f'--maxzoom={MAXZOOM}', '--dry-run'], capture_output=True, text=True)
+            output = result.stdout + result.stderr
+            match = re.search(r'archive size of (\d+(?:\.\d+)?) (B|kB|KB|MB|GB)', output)
+            if result.returncode == 0 and match:
+                break
+            log(f'  dry run {area_id} attempt {attempt + 1} failed (exit {result.returncode}): {output[-800:]}')
+            time.sleep(20 * (attempt + 1))
+        else:
+            sys.exit(f'dry run {area_id} failed three times')
         factor = {'B': 1, 'kB': 1e3, 'KB': 1e3, 'MB': 1e6, 'GB': 1e9}[match.group(2)]
         self.sizes[area_id] = float(match.group(1)) * factor
         return self.sizes[area_id]
@@ -305,8 +313,17 @@ def build(args):
         area = planner.area_file(entry['id'], entry['polys'])
         log('extract', entry['id'])
         partial = OUT / f"{entry['id']}.partial"
-        subprocess.run(['pmtiles', 'extract', planet, str(partial), f'--region={area}', f'--maxzoom={MAXZOOM}',
-                        '--download-threads=4'], check=True, capture_output=True)
+        for attempt in range(3):
+            result = subprocess.run(['pmtiles', 'extract', planet, str(partial), f'--region={area}',
+                                     f'--maxzoom={MAXZOOM}', '--download-threads=4'], capture_output=True, text=True)
+            if result.returncode == 0:
+                break
+            log(f"  extract {entry['id']} attempt {attempt + 1} failed (exit {result.returncode}): "
+                f"{(result.stdout + result.stderr)[-800:]}")
+            partial.unlink(missing_ok=True)
+            time.sleep(30 * (attempt + 1))
+        else:
+            sys.exit(f"extract {entry['id']} failed three times")
         partial.replace(target)
         size = target.stat().st_size
         if size >= LIMIT:

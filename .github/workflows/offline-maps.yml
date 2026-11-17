@@ -82,6 +82,8 @@ jobs:
 
   manifest:
     needs: [select, build]
+    # Also when a continent failed: the finished ones are listed, a failed one keeps its entries from before.
+    if: ${{ always() && needs.select.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
