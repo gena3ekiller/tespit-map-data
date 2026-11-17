@@ -19,6 +19,8 @@ concurrency:
   cancel-in-progress: false
 env:
   PMTILES_VERSION: "1.31.2"
+  # GitHub's digest of go-pmtiles_1.31.2_Linux_x86_64.tar.gz (the release has no checksums file).
+  PMTILES_SHA256: "3ed7dbf4ec2e6dfe5e25b6f70d1ffc932729f93c86db353bf514dd71010a312f"
 jobs:
   select:
     runs-on: ubuntu-latest
@@ -57,9 +59,7 @@ jobs:
         run: |
           curl -fsSL -o /tmp/pmtiles.tar.gz \
             "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz"
-          curl -fsSL -o /tmp/checksums.txt \
-            "https://github.com/protomaps/go-pmtiles/releases/download/v${PMTILES_VERSION}/checksums.txt"
-          (cd /tmp && grep "go-pmtiles_${PMTILES_VERSION}_Linux_x86_64.tar.gz" checksums.txt | sha256sum -c -)
+          echo "${PMTILES_SHA256}  /tmp/pmtiles.tar.gz" | sha256sum -c -
           sudo tar -xzf /tmp/pmtiles.tar.gz -C /usr/local/bin pmtiles
           pmtiles version
       - name: Natural Earth borders
