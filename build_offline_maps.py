@@ -125,6 +125,7 @@ class Planner:
         self.used = set()
         # Only these countries (ISO codes), for trying the plan out.
         self.countries = countries
+        AREAS.mkdir(parents=True, exist_ok=True)
 
     def unique(self, area_id):
         """Natural Earth gives a few states the same ISO code (Jervis Bay and New South Wales): number the later ones."""
@@ -133,7 +134,6 @@ class Planner:
             candidate, n = f'{area_id}-{n}', n + 1
         self.used.add(candidate)
         return candidate
-        AREAS.mkdir(parents=True, exist_ok=True)
 
     def area_file(self, area_id, polys):
         path = AREAS / f'{area_id}.geojson'
