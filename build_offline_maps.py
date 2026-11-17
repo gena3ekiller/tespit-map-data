@@ -115,8 +115,9 @@ def bbox_of(polys):
 
 
 def rectangle(box):
+    """A box as MultiPolygon coordinates: one polygon with one ring (17.11.2026: one level less was invalid GeoJSON)."""
     w, s, e, n = box
-    return [[[w, s], [e, s], [e, n], [w, n], [w, s]]]
+    return [[[[w, s], [e, s], [e, n], [w, n], [w, s]]]]
 
 
 class Planner:
