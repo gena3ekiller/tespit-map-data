@@ -75,10 +75,16 @@ jobs:
           python3 build_offline_maps.py build "${{ matrix.continent }}" \
             --planet "${{ needs.select.outputs.key }}" \
             --tag "maps-${{ needs.select.outputs.date }}-${{ matrix.continent }}" --upload
+      - name: Package picker outlines from the extraction areas
+        run: |
+          python3 -m pip install --only-binary=:all: shapely==2.1.2
+          python3 build_package_areas.py continent "${{ matrix.continent }}"
       - uses: actions/upload-artifact@v4
         with:
           name: regions-${{ matrix.continent }}
-          path: dist/offline/regions-${{ matrix.continent }}.json
+          path: |
+            dist/offline/regions-${{ matrix.continent }}.json
+            dist/offline/areas-${{ matrix.continent }}.geojson
 
   manifest:
     needs: [select, build]
@@ -96,11 +102,12 @@ jobs:
         run: |
           git pull --rebase origin main
           python3 build_offline_maps.py manifest --planet "${{ needs.select.outputs.key }}"
+          python3 build_package_areas.py merge
       - name: Commit
         run: |
           git config user.name "tespit-offline-maps"
           git config user.email "tespit-offline-maps@users.noreply.github.com"
-          git add offline-maps.json
+          git add offline-maps.json package-areas.geojson
           git diff --cached --quiet && exit 0
           git commit -m "Offline-Karten ${{ needs.select.outputs.date }}"
           git pull --rebase origin main

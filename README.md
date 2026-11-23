@@ -25,8 +25,33 @@ Fixed speed camera data for the Tespit app, built from OpenStreetMap.
   halves. Releases `maps-<date>-<continent>` (Europe, Asia, Africa, North America, South America, Oceania, Antarctica).
 - **`offline-maps.json`:** the list the apps read (id, continent, country, name, file, size, SHA-256, bounding box,
   release tag per region). Like `manifest.json`, it carries no URLs.
+- **`package-areas.geojson`** contains one WGS84 MultiPolygon per catalog ID, including islands and holes.
+  Its `catalogSHA256` identifies the exact bytes of `offline-maps.json`. Both apps bundle the two files for the
+  first offline visit. The hand-started workflow publishes the pair together and retains outlines for continents
+  it did not rebuild. The fourteen split packages in the November 17 catalog cover rectangles in Canada.
+  Their overlaps, including Ottawa, are part of the actual extraction area.
 - **Built by** `.github/workflows/offline-maps.yml` (started by hand, about 140 GB) with `build_offline_maps.py`.
 - **Style:** `offline_style/` (colours after the OpenStreetMap standard map, CC0; Noto Sans glyphs, OFL).
 - **License:** ODbL 1.0, © OpenStreetMap contributors. The apps show the attribution on the map.
 
 Code: MIT. Data: ODbL 1.0.
+
+### Reproducing the package outlines
+
+`build_package_areas.py continent NAME` reads the exact extraction masks left by the PMTiles builder.
+It joins grouped provinces, simplifies shared borders, and keeps small islands and enclaves. The source
+coordinates describe a generalized selection area. PMTiles can also include neighboring places in boundary tiles.
+`build_package_areas.py merge` checks coverage against the catalog and writes its SHA-256 into the collection.
+
+The inaugural catalog is from [data commit 7bd1485](https://github.com/gena3ekiller/tespit-map-data/commit/7bd148588994ce21400f7fe2519ac2b9cf00130c).
+The producer used the [Natural Earth 1:10m GeoJSON inputs](https://github.com/nvkelso/natural-earth-vector/tree/ca96624a56bd078437bca8184e78163e5039ad19/geojson).
+For an independent rebuild, place `ne_10m_admin_0_countries.geojson` and `ne_10m_admin_1_states_provinces.geojson`
+from that revision in `raw/`. The following commands use Shapely 2.1.2 and GEOS 3.13.1.
+
+```sh
+python3 build_package_areas.py replay --output /tmp/package-areas.geojson
+cmp package-areas.geojson /tmp/package-areas.geojson
+```
+
+Replay uses the published package IDs in place of network size probes and checks each reconstructed name,
+country, level, split side and bounding box against the catalog. It requires no planet data or PMTiles downloads.
