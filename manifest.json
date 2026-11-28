@@ -4,12 +4,12 @@
  "disabledCountries": [],
  "minAppVersion": "1.1.16",
  "pack": {
-  "tag": "data-2026-11-20",
+  "tag": "data-2026-11-28",
   "file": "speedtraps.json.gz",
-  "size": 2061296,
-  "sha256": "d702ea057dae26788a37fad6437c20ddbba45889842829a383fa69243de9c911",
-  "unpackedSize": 6960946,
-  "unpackedSha256": "d97d41e3e39f60b549e782ed0c697053c0faabd09c732da0eb691d00f7667ef2",
-  "dataDate": "2026-11-20"
+  "size": 2063949,
+  "sha256": "1e4b6071434740f6fc4c74d4272219cb9329b57a0d8647300665fd4586ae034b",
+  "unpackedSize": 6970419,
+  "unpackedSha256": "0d89dc2ce6ecad4ef409c78655f513f76b444ac0ea9491d8508b9a79d10110ef",
+  "dataDate": "2026-11-28"
  }
 }
